@@ -97,9 +97,12 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Filters\ConvolutionFilterBase.cs" />
+    <Compile Include="Filters\Daugman.cs" />
     <Compile Include="Filters\FunctionalFilterBase.cs" />
     <Compile Include="Filters\GaussianSmoothing.cs" />
+    <Compile Include="Filters\Greyscale.cs" />
     <Compile Include="Helpers\FunctionHelper.cs" />
+    <Compile Include="Helpers\PointExtensions.cs" />
     <Compile Include="Views\Converters\BitmapToImageSource.cs" />
     <Compile Include="Views\Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Filters\Interfaces\IError.cs" />

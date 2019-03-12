@@ -19,7 +19,9 @@ namespace ImageEditor.ViewModel
         #region properties
         private List<FiltersListViewItem> AllFilters = new List<FiltersListViewItem>
         {
-            new FiltersListViewItem(new GaussianSmoothing())
+            new FiltersListViewItem(new GaussianSmoothing()),
+            new FiltersListViewItem(new Daugman()),
+            new FiltersListViewItem(new Greyscale())
         };
 
         public static MainViewModel Instance { get; set; } //used to update Bitamp, in other View Models
