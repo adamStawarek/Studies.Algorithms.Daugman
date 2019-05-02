@@ -7,10 +7,15 @@ using System.Linq;
 
 namespace ImageEditor.Filters
 {
+    public struct CircleIntensity
+    {
+        public int radius;
+        public int diffIntensity;
+    }
     public class Daugman : IFilter
     {
         public string Name => "Daugman";
-        private int _maxRadius = 60;
+        private int _maxRadius = 80;
 
         public Bitmap Filter(Bitmap processedBitmap)
         {
@@ -72,28 +77,30 @@ namespace ImageEditor.Filters
 
             LogService.Write("calculating circular pixels intensities");
             #region calculating circular pixels intensities
-            var pointMaxIntensityDifferences = new Dictionary<Point, int>();
+            var pointMaxIntensityDifferences = new Dictionary<Point, CircleIntensity>();
 
             foreach (var point in localMinPixels)
             {
                 var previousIntensities = 0;
-                pointMaxIntensityDifferences.Add(point, 0);
-                for (int i = 1; i < _maxRadius; i++)
+                pointMaxIntensityDifferences.Add(point, new CircleIntensity());
+                for (int i = 25; i < _maxRadius; i++)
                 {
-                    var circularPoints = point.GetCircularPoints(i, Math.PI / 8.0f);
+                    var circularPoints = point.GetCircularPoints(i, Math.PI / 6.0f);
 
-                    var intensitiesSum = circularPoints.Sum(p =>
+                    var intensitiesSum = (int)circularPoints.Sum(p =>
                     {
                         var pixel = processedBitmap.GetPixel(p.X, p.Y);
                         return GetGreyscale(pixel.R, pixel.G, pixel.B);
                     });
-
+                    LogService.Write($"Intensity at radius {i} at point {point.X} , {point.Y} : {intensitiesSum}");
                     if (previousIntensities != 0)
                     {
-                        var difference = intensitiesSum - previousIntensities;
-                        pointMaxIntensityDifferences[point] = difference > pointMaxIntensityDifferences[point]
-                            ? difference
-                            : pointMaxIntensityDifferences[point];
+                        var difference = Math.Abs(intensitiesSum - previousIntensities);
+                        if (difference > pointMaxIntensityDifferences[point].diffIntensity)
+                        {
+                            pointMaxIntensityDifferences[point]=new CircleIntensity(){diffIntensity = difference,radius = i};
+                        }
+                    
                     }
 
                     previousIntensities = intensitiesSum;
@@ -104,18 +111,33 @@ namespace ImageEditor.Filters
 
             #region display obtained points
 
-            var point2 = pointMaxIntensityDifferences.OrderByDescending(p => p.Value).First();
+            var point2 = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.diffIntensity).First();
+            LogService.Write($"Selected center: {point2.Key.X} , {point2.Key.Y} ,radius: {point2.Value.radius} , " +
+                             $"diffIntensity: {point2.Value.diffIntensity}");
 
 
-            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y + 1, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y + 1, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y + 1, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y - 1, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y - 1, Color.Red);
-            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Red);
+            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y + 1, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y + 1, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y + 1, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y - 1, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X, point2.Key.Y - 1, Color.Yellow);
+            processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow);
+            foreach (var p in point2.Key.GetCircularPoints(point2.Value.radius, Math.PI / 6.0f))
+            {
+                processedBitmap.SetPixel(p.X, p.Y, Color.Red);
+                processedBitmap.SetPixel(p.X - 1, p.Y, Color.Red);
+                processedBitmap.SetPixel(p.X + 1, p.Y, Color.Red);
+                processedBitmap.SetPixel(p.X - 1, p.Y + 1, Color.Red);
+                processedBitmap.SetPixel(p.X, p.Y + 1, Color.Red);
+                processedBitmap.SetPixel(p.X + 1, p.Y + 1, Color.Red);
+                processedBitmap.SetPixel(p.X - 1, p.Y - 1, Color.Red);
+                processedBitmap.SetPixel(p.X, p.Y - 1, Color.Red);
+                processedBitmap.SetPixel(p.X + 1, p.Y - 1, Color.Red);
+            }
+           
 
 
             return processedBitmap;
