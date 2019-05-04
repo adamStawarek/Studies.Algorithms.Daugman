@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ImageEditor\ImageEditor.csproj" />
+    <ProjectReference Include="..\ImageEditor\IrisExtractor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

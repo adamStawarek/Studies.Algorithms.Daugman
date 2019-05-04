@@ -96,6 +96,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Filters\CircleIntensity.cs" />
     <Compile Include="Filters\ConvolutionFilterBase.cs" />
     <Compile Include="Filters\Daugman.cs" />
     <Compile Include="Filters\FunctionalFilterBase.cs" />
