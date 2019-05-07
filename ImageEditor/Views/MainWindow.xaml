@@ -19,35 +19,48 @@
     <DockPanel x:Name="MainPanel" Background="{DynamicResource PrimaryHueLightBrush}">
         <Menu DockPanel.Dock="Top" Background="{DynamicResource PrimaryHueDarkBrush}" 
               Foreground="{DynamicResource PrimaryHueDarkForegroundBrush}">
-            <MenuItem Header="_File" >
-                <MenuItem Header="_Open" Command="{Binding OpenFileCommand}"/>
-                <MenuItem Header="_Save"  Command="{Binding SaveFileCommand}"/>
+            <MenuItem Header="_Folder" >
+                <MenuItem Header="_Open" Command="{Binding OpenFolderCommand}"/>
             </MenuItem>
         </Menu>
         <Grid DockPanel.Dock="Bottom" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="2.3*"/>
                 <ColumnDefinition Width="5" />
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0" Margin="10">
-                <Grid Background="{DynamicResource MaterialDesignPaper}" AllowDrop="True" x:Name="Grid">
-                    <Image Stretch="None"  
-                       Tag="Image" x:Name="Image" 
-                       Source="{Binding Bitmap,Converter={StaticResource BitmapToImageSource},NotifyOnSourceUpdated=True}" >
-                        <i:Interaction.Triggers>
-                            <i:EventTrigger EventName="MouseMove">
-                                <command:EventToCommand PassEventArgsToCommand="True" Command="{Binding OpenPopupCommand}"/>
-                            </i:EventTrigger>
-                        </i:Interaction.Triggers>
-                    </Image>
-                    <fa:ImageAwesome Icon="Spinner" Visibility="{Binding SpinnerVisibility}" Foreground="{DynamicResource PrimaryHueDarkBrush}"
-                                     HorizontalAlignment="Center" VerticalAlignment="Center" Spin="True" Height="80" Width="80" />
-                    <i:Interaction.Triggers>
-                        <i:EventTrigger EventName="Drop">
-                            <command:EventToCommand PassEventArgsToCommand="True" Command="{Binding DropFilesCommand}"/>
-                        </i:EventTrigger>
-                    </i:Interaction.Triggers>
+                <Grid Background="{DynamicResource MaterialDesignPaper}" x:Name="Grid">
+                    <ListBox x:Name="LstPackets" ItemsSource="{Binding ImageViewItems}"
+                             SelectionMode="Single" Grid.Column="0">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="5"/>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel x:Name="WrapPanel" Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Width="200">
+                                    <Image Stretch="Uniform" 
+                                           Tag="Image" x:Name="Image" 
+                                           Source="{Binding ProcessedBitmap,Converter={StaticResource BitmapToImageSource},NotifyOnSourceUpdated=True}" >
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="MouseMove">
+                                                <command:EventToCommand PassEventArgsToCommand="True" Command="{Binding DataContext.OpenPopupCommand,ElementName=MainPanel}"/>
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </Image>
+                                    <fa:ImageAwesome Icon="Spinner" Visibility="{Binding SpinnerVisibility}" Foreground="{DynamicResource PrimaryHueDarkBrush}"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center" Spin="True" Height="80" Width="80" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
                 </Grid>
                 <Popup x:Name="PopupBox" Placement="Top" PlacementTarget="{Binding ElementName=Image}">
                     <Grid Background="AliceBlue">

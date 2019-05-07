@@ -5,43 +5,22 @@ using ImageEditor.Filters.Interfaces;
 using ImageEditor.ViewModel.Helpers;
 using Microsoft.Win32;
 using System.Drawing;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Collections.ObjectModel;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using System.IO;
+using System.Linq;
 
 namespace ImageEditor.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        #region properties      
-        public static MainViewModel Instance { get; set; } //used to update Bitamp, in other View Models
-        private Bitmap _orginBitmap;
-        public FiltersListViewItem FilterItem => new FiltersListViewItem(new Daugman());
+        #region properties
+        public FilterViewItem FilterItem => new FilterViewItem(new Daugman());
+        public ObservableCollection<ImageViewItem> ImageViewItems { get; set; }
 
-        private Visibility _spinnerVisibility = Visibility.Hidden;
-        public Visibility SpinnerVisibility
-        {
-            get => _spinnerVisibility;
-            set
-            {
-                _spinnerVisibility = value;
-                RaisePropertyChanged("SpinnerVisibility");
-            }
-        }
-
-        private Bitmap _bitmap;
-        public Bitmap Bitmap
-        {
-            get => _bitmap;
-            set
-            {
-                _bitmap = value;
-                RaisePropertyChanged("Bitmap");
-            }
-
-        }
-
-        private string _rgbVal;
+        private string _rgbVal;       
         public string RgbVal
         {
             get => _rgbVal;
@@ -54,27 +33,20 @@ namespace ImageEditor.ViewModel
         #endregion
 
         #region relay commands
-        public RelayCommand OpenFileCommand { get; private set; }
-        public RelayCommand SaveFileCommand { get; private set; }
-
+        public RelayCommand OpenFolderCommand { get; private set; }
         public RelayCommand ClearFiltersCommand { get; private set; }
         public RelayCommand<object> ApplyFilterCommand { get; private set; }
-        public RelayCommand<object> DropFilesCommand { get; private set; }
         public RelayCommand<object> SetProjectionCommand { get; set; }
         public RelayCommand<object> OpenPopupCommand { get; private set; }
-
         #endregion
 
         public MainViewModel()
         {
-            Instance = this;
-
-            OpenFileCommand = new RelayCommand(OpenFile);
-            SaveFileCommand = new RelayCommand(SaveFile);
-            ApplyFilterCommand = new RelayCommand<object>(ApplyFilter);
-            DropFilesCommand = new RelayCommand<object>(DropFiles);
+            OpenFolderCommand = new RelayCommand(OpenFolder);
+            ApplyFilterCommand = new RelayCommand<object>(ApplyFilter);           
             OpenPopupCommand = new RelayCommand<object>(SetCurrentPixelValuesToRgbBox);
             ClearFiltersCommand = new RelayCommand(ResetFilter);
+            ImageViewItems=new ObservableCollection<ImageViewItem>();
 
             if (FilterItem.Filter is IError e)
             {
@@ -83,77 +55,32 @@ namespace ImageEditor.ViewModel
             }
         }
 
-        #region file opening/saving
-
-        private void DropFiles(object p)
+        private void OpenFolder()
         {
-            var e = p as DragEventArgs;
-            if (e != null && !e.Data.GetDataPresent(DataFormats.FileDrop)) return;
-            if (e != null)
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
             {
-                var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                if (files == null) return;
-                try
-                {
-                    _orginBitmap = Bitmap = new Bitmap(files.FirstOrDefault());
-                    FilterItem.ErrorMessage = "";
-                }
-                catch
-                {
-                    return;
-                }
-            }
-        }
-
-        private void SaveFile()
-        {
-            if (Bitmap == null) return;
-            SaveFileDialog saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Images|*.png;*.bmp;*.jpg";
-            saveFileDialog.Title = "Save an Image File";
-            saveFileDialog.ShowDialog();
-
-            if (saveFileDialog.FileName != "")
-            {
-                using (System.IO.FileStream fs =
-                    (System.IO.FileStream)saveFileDialog.OpenFile())
-                {
-                    string ext = System.IO.Path.GetExtension(saveFileDialog.FileName);
-                    switch (ext)
-                    {
-                        case ".jpg":
-                            _bitmap.Save(fs,
-                                System.Drawing.Imaging.ImageFormat.Jpeg);
-                            break;
-
-                        case ".bmp":
-                            _bitmap.Save(fs,
-                                System.Drawing.Imaging.ImageFormat.Bmp);
-                            break;
-                        case ".png":
-                            _bitmap.Save(fs,
-                                System.Drawing.Imaging.ImageFormat.Png);
-                            break;
-                    }
-                }
-            }
-        }
-
-        private void OpenFile()
-        {
-            OpenFileDialog openfiledialog = new OpenFileDialog();
-
-            openfiledialog.Title = "Open Image";
-            openfiledialog.Filter = "Image File|*.bmp; *.gif; *.jpg; *.jpeg; *.png;";
-
-            if (openfiledialog.ShowDialog() == true)
-            {
-                _orginBitmap = Bitmap = new Bitmap(openfiledialog.FileName);
+                var files=Directory.GetFiles(dialog.FileName, "*.jpg", SearchOption.AllDirectories);
+                SetUpImageViews(files);
                 FilterItem.ErrorMessage = "";
             }
         }
 
-        #endregion
+        private void SetUpImageViews(string[] files)
+        {
+            ImageViewItems.Clear();
+            foreach (var file in files)
+            {
+                ImageViewItems.Add(new ImageViewItem()
+                {
+                    FilePath = file,
+                    OriginalBitmap = new Bitmap(file),
+                    ProcessedBitmap = new Bitmap(file),
+                    SpinnerVisibility = Visibility.Hidden
+                });
+            }           
+        }
 
         private void SetCurrentPixelValuesToRgbBox(object obj)
         {
@@ -165,15 +92,19 @@ namespace ImageEditor.ViewModel
 
         private async void ApplyFilter(object obj)
         {
-            if (_bitmap == null || SpinnerVisibility == Visibility.Visible) return;
-            var filter = obj as FiltersListViewItem;
-            SpinnerVisibility = Visibility.Visible;
-            _bitmap = await ApplyFilterAsync(new Bitmap(_bitmap), filter);
-            RaisePropertyChanged("Bitmap");
-            SpinnerVisibility = Visibility.Hidden;
+            foreach (var item in ImageViewItems)
+            {
+                if (item.ProcessedBitmap == null || item.SpinnerVisibility == Visibility.Visible) return;
+                var filter = obj as FilterViewItem;
+                item.SpinnerVisibility = Visibility.Visible;
+                item.ProcessedBitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
+                RaisePropertyChanged(nameof(item.ProcessedBitmap));
+                item.SpinnerVisibility = Visibility.Hidden;
+            }
+        
         }
 
-        private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FiltersListViewItem filterItem)
+        private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FilterViewItem filterItem)
         {
             await Task.Run(delegate
             {
@@ -184,9 +115,12 @@ namespace ImageEditor.ViewModel
 
         private void ResetFilter()
         {
-            if (_bitmap == null || SpinnerVisibility == Visibility.Visible) return;
-            _bitmap = new Bitmap(_orginBitmap);
-            RaisePropertyChanged("Bitmap");      
+            foreach (var item in ImageViewItems)
+            {
+                if (item.ProcessedBitmap== null || item.SpinnerVisibility == Visibility.Visible) return;
+                item.ProcessedBitmap = new Bitmap(item.OriginalBitmap);
+                RaisePropertyChanged(nameof(item.ProcessedBitmap));
+            }         
         }
     }
 }

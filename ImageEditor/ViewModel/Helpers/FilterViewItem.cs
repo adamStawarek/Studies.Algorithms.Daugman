@@ -5,7 +5,7 @@ using ImageEditor.Filters.Interfaces;
 
 namespace ImageEditor.ViewModel.Helpers
 {
-    public class FiltersListViewItem:INotifyPropertyChanged
+    public class FilterViewItem:INotifyPropertyChanged
     {
         private string _errorMessage;
         public string ErrorMessage
@@ -19,7 +19,7 @@ namespace ImageEditor.ViewModel.Helpers
             }
         }
         public IFilter Filter { get; set; }  
-        public FiltersListViewItem( IFilter filter)
+        public FilterViewItem( IFilter filter)
         {
             Filter = filter;
         }       
