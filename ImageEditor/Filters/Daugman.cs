@@ -9,7 +9,7 @@ namespace ImageEditor.Filters
 {
     public class Daugman : IFilter
     {
-        public string Name => "Daugman";
+        public string Name => "daugman";
         private readonly int _maxRadius = 80;
         private readonly int _minRadius = 30;
         private Bitmap _processedBitmap;
@@ -183,13 +183,6 @@ namespace ImageEditor.Filters
                 if (isLocalMin)
                     localMinPixels.Add(p1);
             }
-
-            //remove points that are closer that _minRadius to image edges
-            //localMinPixels = localMinPixels.Where(p => p.X + _maxRadius < _processedBitmap.Width
-            //                                           && p.X - _maxRadius > 0
-            //                                           && p.Y + _maxRadius < _processedBitmap.Height
-            //                                           && p.Y - _maxRadius > 0).ToList();
-
             return localMinPixels;
         }       
 
@@ -214,7 +207,7 @@ namespace ImageEditor.Filters
                 if(maxPointRadius<_minRadius) continue;
 
 
-                for (int i = _minRadius; i <  maxPointRadius; i++)
+                for (int i = _minRadius; i <  maxPointRadius; i+=3)
                 {
                     var circularPoints = point.GetCircularPoints(i, Math.PI / 6.0f);
 
@@ -271,7 +264,7 @@ namespace ImageEditor.Filters
                 _processedBitmap.SetPixel(p.X + 1, p.Y - 1, Color.Red);
             }
 
-            //var points = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).Take(10).ToList();
+            //var points = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).Take(5).ToList();
             ////LogService.Write($"Selected center: {point2.Key.X} , {point2.Key.Y} ,radius: {point2.Value.Radius} , " +
             ////                 $"diffIntensity: {point2.Value.DiffIntensity}");
 
@@ -286,7 +279,7 @@ namespace ImageEditor.Filters
             //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y + 1, Color.Yellow);
             //    _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y - 1, Color.Yellow);
             //    _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y - 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow); 
+            //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow);
             //}
             //foreach (var p in points[0].Key.GetCircularPoints(points[0].Value.Radius, Math.PI / 6.0f))
             //{

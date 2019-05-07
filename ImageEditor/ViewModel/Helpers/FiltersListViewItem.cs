@@ -7,17 +7,6 @@ namespace ImageEditor.ViewModel.Helpers
 {
     public class FiltersListViewItem:INotifyPropertyChanged
     {
-        private int _applicationCounter;       
-        public int ApplicationCounter
-        {
-            get => _applicationCounter;
-            set
-            {
-                if (value == _applicationCounter) return;
-                _applicationCounter = value;
-                OnPropertyChanged();
-            }
-        }
         private string _errorMessage;
         public string ErrorMessage
         {

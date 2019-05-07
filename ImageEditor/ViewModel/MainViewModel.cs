@@ -4,30 +4,19 @@ using ImageEditor.Filters;
 using ImageEditor.Filters.Interfaces;
 using ImageEditor.ViewModel.Helpers;
 using Microsoft.Win32;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data;
 
 namespace ImageEditor.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        #region properties
-        private List<FiltersListViewItem> AllFilters = new List<FiltersListViewItem>
-        {
-            new FiltersListViewItem(new GaussianSmoothing()),
-            new FiltersListViewItem(new Daugman()),
-            new FiltersListViewItem(new Greyscale())
-        };
-
+        #region properties      
         public static MainViewModel Instance { get; set; } //used to update Bitamp, in other View Models
         private Bitmap _orginBitmap;
-
-        public ICollectionView FiltersView { get; set; }
+        public FiltersListViewItem FilterItem => new FiltersListViewItem(new Daugman());
 
         private Visibility _spinnerVisibility = Visibility.Hidden;
         public Visibility SpinnerVisibility
@@ -61,11 +50,10 @@ namespace ImageEditor.ViewModel
                 _rgbVal = value;
                 RaisePropertyChanged("RgbVal");
             }
-        } 
+        }
         #endregion
 
         #region relay commands
-
         public RelayCommand OpenFileCommand { get; private set; }
         public RelayCommand SaveFileCommand { get; private set; }
 
@@ -81,21 +69,17 @@ namespace ImageEditor.ViewModel
         {
             Instance = this;
 
-            FiltersView = CollectionViewSource.GetDefaultView(AllFilters);
             OpenFileCommand = new RelayCommand(OpenFile);
             SaveFileCommand = new RelayCommand(SaveFile);
             ApplyFilterCommand = new RelayCommand<object>(ApplyFilter);
             DropFilesCommand = new RelayCommand<object>(DropFiles);
             OpenPopupCommand = new RelayCommand<object>(SetCurrentPixelValuesToRgbBox);
-            ClearFiltersCommand = new RelayCommand(ClearFilters);
+            ClearFiltersCommand = new RelayCommand(ResetFilter);
 
-            foreach (var modification in AllFilters)
+            if (FilterItem.Filter is IError e)
             {
-                if (modification.Filter is IError e)
-                {
-                    e.ErrorOccured += delegate { modification.ErrorMessage = e.ErrorMessage; };
-                    e.NoErrorOccured += delegate { modification.ErrorMessage = e.ErrorMessage; };
-                }
+                e.ErrorOccured += delegate { FilterItem.ErrorMessage = e.ErrorMessage; };
+                e.NoErrorOccured += delegate { FilterItem.ErrorMessage = e.ErrorMessage; };
             }
         }
 
@@ -112,9 +96,7 @@ namespace ImageEditor.ViewModel
                 try
                 {
                     _orginBitmap = Bitmap = new Bitmap(files.FirstOrDefault());
-                    //clear filters and modifications
-                    AllFilters.ForEach(m => m.ApplicationCounter = 0);
-                    AllFilters.ForEach(m => m.ErrorMessage = "");
+                    FilterItem.ErrorMessage = "";
                 }
                 catch
                 {
@@ -167,14 +149,12 @@ namespace ImageEditor.ViewModel
             if (openfiledialog.ShowDialog() == true)
             {
                 _orginBitmap = Bitmap = new Bitmap(openfiledialog.FileName);
-                //clear filters and modifications
-                AllFilters.ForEach(m => m.ApplicationCounter = 0);
-                AllFilters.ForEach(m => m.ErrorMessage = "");
+                FilterItem.ErrorMessage = "";
             }
         }
 
         #endregion
-  
+
         private void SetCurrentPixelValuesToRgbBox(object obj)
         {
             var color = ColorUnderCursor.Get();
@@ -192,26 +172,21 @@ namespace ImageEditor.ViewModel
             RaisePropertyChanged("Bitmap");
             SpinnerVisibility = Visibility.Hidden;
         }
-      
+
         private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FiltersListViewItem filterItem)
         {
             await Task.Run(delegate
-            {       
+            {
                 filterItem.Filter.Filter(b);
-                filterItem.ApplicationCounter++;
             });
             return b;
         }
 
-        private void ClearFilters()
+        private void ResetFilter()
         {
             if (_bitmap == null || SpinnerVisibility == Visibility.Visible) return;
             _bitmap = new Bitmap(_orginBitmap);
-            RaisePropertyChanged("Bitmap");
-            foreach (var filtersListViewItem in AllFilters)
-            {
-                filtersListViewItem.ApplicationCounter = 0;
-            }
+            RaisePropertyChanged("Bitmap");      
         }
     }
 }

@@ -10,35 +10,11 @@
           xmlns:converters="clr-namespace:ImageEditor.Views.Converters"
           mc:Ignorable="d"
         DataContext="{Binding Source={StaticResource Locator}, Path=Main}"
-        Title="Image Editor" WindowStartupLocation="CenterScreen" 
+        Title="Iris extractor" WindowStartupLocation="CenterScreen" 
         MinHeight="800" MinWidth="1200" Icon="/ImageEditor;component/Icon.png" WindowState="Maximized">
     <Window.Resources>
         <converters:BitmapToImageSource x:Key="BitmapToImageSource"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
-        <DataTemplate DataType="{x:Type ItemsControl}" x:Key="filterListItemTemplate">
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch">
-                    <StackPanel Orientation="Horizontal">
-
-                        <Button Content="Apply" 
-                                    FontSize="18" HorizontalAlignment="Right" Margin="10">
-
-                            <i:Interaction.Triggers>
-                                <i:EventTrigger EventName="Click">
-                                    <command:EventToCommand PassEventArgsToCommand="True" CommandParameter="{Binding .}"
-                                                            Command="{Binding Path=DataContext.ApplyFilterCommand,ElementName=MainPanel,IsAsync=True}"/>
-                                </i:EventTrigger>
-                            </i:Interaction.Triggers>
-                        </Button>
-                        <Label Content="{Binding Filter.Name}" FontSize="22" VerticalAlignment="Center" FontWeight="DemiBold"/>
-                        <Label ContentStringFormat="x {0}" Content="{Binding ApplicationCounter}" FontSize="22" VerticalAlignment="Center" FontWeight="DemiBold"/>
-                    </StackPanel>
-                </StackPanel>
-                <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
-                           Text="{Binding ErrorMessage,Mode=TwoWay}"  HorizontalAlignment="Left"
-                           FontSize="16" Foreground="OrangeRed" FontWeight="DemiBold"/>
-            </StackPanel>
-        </DataTemplate>
     </Window.Resources>
     <DockPanel x:Name="MainPanel" Background="{DynamicResource PrimaryHueLightBrush}">
         <Menu DockPanel.Dock="Top" Background="{DynamicResource PrimaryHueDarkBrush}" 
@@ -50,7 +26,7 @@
         </Menu>
         <Grid DockPanel.Dock="Bottom" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="5" />
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
@@ -91,21 +67,30 @@
             <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" />
             <materialDesign:Card Grid.Column="2" Margin="10">
                 <StackPanel>
-                    <Expander HorizontalAlignment="Stretch" Header="Filters"  IsExpanded="True">
+                    <Expander HorizontalAlignment="Stretch" Header="Set up"  IsExpanded="True">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Background="White" MaxHeight="650">
                             <StackPanel>
-                                <GroupBox Header="Filters" Margin="5" BorderThickness="5" FontSize="16" FontWeight="DemiBold" Foreground="{DynamicResource PrimaryHueLightBrush}">
-                                    <ItemsControl ItemsSource="{Binding FiltersView}" ItemTemplate="{StaticResource filterListItemTemplate}"/>
-                                </GroupBox>
-                                <Button Height="60"  Command="{Binding ClearFiltersCommand}" 
-                                        HorizontalAlignment="Center"  Style="{StaticResource MaterialDesignFlatButton}" Foreground="OrangeRed">
-                                    <Border BorderThickness="2" BorderBrush="OrangeRed">
-                                        <StackPanel Orientation="Horizontal" Margin="5">
-                                            <materialDesign:PackIcon Width="20" Height="20" VerticalAlignment="Center" Kind="Delete"/>
-                                            <TextBlock FontSize="20" FontWeight="DemiBold" Text="Clear filters"/>
-                                        </StackPanel>
-                                    </Border>
-                                </Button>
+                                <StackPanel DataContext="{Binding DataContext.FilterItem,ElementName=MainPanel}">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <Button Content="{Binding Filter.Name}" ContentStringFormat="Apply {0}"
+                                                    FontSize="18" HorizontalAlignment="Right" Margin="10">
+
+                                            <i:Interaction.Triggers>
+                                                <i:EventTrigger EventName="Click">
+                                                    <command:EventToCommand PassEventArgsToCommand="True" CommandParameter="{Binding .}"
+                                                                                Command="{Binding Path=DataContext.ApplyFilterCommand,ElementName=MainPanel,IsAsync=True}"/>
+                                                </i:EventTrigger>
+                                            </i:Interaction.Triggers>
+                                        </Button>
+                                        <Button Content="Reset" Background="OrangeRed" BorderBrush="OrangeRed"
+                                                    FontSize="18" HorizontalAlignment="Right" Margin="10"
+                                                Command="{Binding DataContext.ClearFiltersCommand,ElementName=MainPanel}">
+                                        </Button>
+                                    </StackPanel>
+                                    <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
+                                               Text="{Binding ErrorMessage,Mode=TwoWay}"  HorizontalAlignment="Left"
+                                               FontSize="16" Foreground="OrangeRed" FontWeight="DemiBold"/>
+                                </StackPanel>
                             </StackPanel>
                         </ScrollViewer>
                     </Expander>
