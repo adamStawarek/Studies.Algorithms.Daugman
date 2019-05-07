@@ -253,6 +253,8 @@ namespace ImageEditor.Filters
             _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow);
             foreach (var p in point2.Key.GetCircularPoints(point2.Value.Radius, Math.PI / 6.0f))
             {
+                if(p.Y+1>=_processedBitmap.Height||p.Y-1<0||p.X-1<0||p.X+1>=_processedBitmap.Width)
+                    continue;
                 _processedBitmap.SetPixel(p.X, p.Y, Color.Red);
                 _processedBitmap.SetPixel(p.X - 1, p.Y, Color.Red);
                 _processedBitmap.SetPixel(p.X + 1, p.Y, Color.Red);

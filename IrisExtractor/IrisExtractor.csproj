@@ -112,7 +112,6 @@
     <Compile Include="Views\Converters\BitmapToImageSource.cs" />
     <Compile Include="Views\Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Filters\Interfaces\IError.cs" />
-    <Compile Include="ViewModel\Helpers\ColorUnderPixel .cs" />
     <Compile Include="Helpers\LogService.cs" />
     <Compile Include="ViewModel\Helpers\FilterViewItem.cs" />
     <Compile Include="Helpers\IntegerExtensions.cs" />
