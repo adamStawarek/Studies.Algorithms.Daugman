@@ -3,19 +3,19 @@ using GalaSoft.MvvmLight.CommandWpf;
 using ImageEditor.Filters;
 using ImageEditor.Filters.Interfaces;
 using ImageEditor.ViewModel.Helpers;
+using Microsoft.WindowsAPICodePack.Dialogs;
+using System.Collections.ObjectModel;
 using System.Drawing;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Collections.ObjectModel;
-using Microsoft.WindowsAPICodePack.Dialogs;
-using System.IO;
-using System.Windows.Threading;
 
 namespace ImageEditor.ViewModel
 {
     public class MainViewModel : ViewModelBase
     {
-        
+
         #region properties
         public FilterViewItem FilterItem => new FilterViewItem(new Daugman());
         public ObservableCollection<ImageViewItem> ImageViewItems { get; set; }
@@ -79,23 +79,18 @@ namespace ImageEditor.ViewModel
             }
         }
 
-        private void ApplyFilter(object obj)
+        private async void ApplyFilter(object obj)
         {
-            Parallel.ForEach(ImageViewItems,async item =>
+            foreach (var item in ImageViewItems)
             {
                 if (item.ProcessedBitmap == null || item.SpinnerVisibility == Visibility.Visible) return;
                 var filter = obj as FilterViewItem;
-                Dispatcher.CurrentDispatcher.Invoke(() => item.SpinnerVisibility = Visibility.Visible);
-
-                var bitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), FilterItem);
-                Dispatcher.CurrentDispatcher.Invoke(() =>
-                {
-                    item.ProcessedBitmap = bitmap;
-                    RaisePropertyChanged(nameof(item.ProcessedBitmap));
-                    item.SpinnerVisibility = Visibility.Hidden;
-                    ProcessedImagesCount++;
-                });
-            });          
+                item.SpinnerVisibility = Visibility.Visible;
+                item.ProcessedBitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
+                RaisePropertyChanged(nameof(item.ProcessedBitmap));
+                item.SpinnerVisibility = Visibility.Hidden;
+                ProcessedImagesCount++;
+            }
         }
 
         private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FilterViewItem filterItem)

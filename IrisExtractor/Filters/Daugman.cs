@@ -19,12 +19,17 @@ namespace ImageEditor.Filters
             _processedBitmap = bitmap;
             var pn = GetProbabilities();
             ApplyHistogramEqualization(pn);
-            var startPoint = FindFloodFillStaringPoint();
-            ApplyFloodFill(startPoint);
+            var pointsToIgnore=new List<Point>();
+            var whitePoints = GetWhitePointsFromImageCenter();
+            while (whitePoints.Count>0)
+            {
+                ApplyFloodFill(whitePoints.First(),50, whitePoints);
+            } 
+           
             var thresholdPixels = ApplyThresholding();
             var localMinPixels = FindLocalMinimums(ref thresholdPixels);
             var pointMaxIntensityDifferences = CalculateCircularPixelsIntensities(localMinPixels);
-            MarkObtainedPoints(pointMaxIntensityDifferences,startPoint);         
+            MarkObtainedPoints(pointMaxIntensityDifferences);         
             return _processedBitmap;
         }
       
@@ -75,35 +80,37 @@ namespace ImageEditor.Filters
             }
         }
 
-        private Point FindFloodFillStaringPoint()
+        private List<Point> GetWhitePointsFromImageCenter()
         {
             var offsetWidth = _processedBitmap.Width / 3;
             var offsetHeight = _processedBitmap.Height / 3;
-            (Point? point, byte intensity) point= (null, 0);
-            for (int y = offsetHeight; y < _processedBitmap.Height-offsetHeight; y++)
+            var whiteBound = 200;
+            var whitePoints = new List<Point>();
+            for (int y = offsetHeight; y < _processedBitmap.Height - offsetHeight; y++)
             {
-                for (int x = offsetWidth; x < _processedBitmap.Width-offsetWidth; x++)
+                for (int x = offsetWidth; x < _processedBitmap.Width - offsetWidth; x++)
                 {
                     var pixel = _processedBitmap.GetPixel(x, y);
                     byte blue = pixel.R;
                     byte green = pixel.G;
                     byte red = pixel.B;
                     var grayScale = GetGreyscale(red, green, blue);
-                    if (point.point == null || point.intensity < grayScale)
-                        point = (new Point(x, y), grayScale);
+                    if(grayScale>whiteBound)
+                        whitePoints.Add(new Point(x,y));
                 }
             }
 
-            return (Point)point.point;
+            return whitePoints;
         }
 
-        private void ApplyFloodFill(Point startPoint)
+        private void ApplyFloodFill(Point startPoint,int maxReflectionSize,List<Point> whitePoints)
         {
             Stack<Point> pixels = new Stack<Point>();
             var targetColor = _processedBitmap.GetPixel(startPoint.X, startPoint.Y);
             var targetIntensity = GetGreyscale(targetColor.R, targetColor.G, targetColor.B);
             pixels.Push(startPoint);
-            var offset = 40;
+            var offset = 20;
+            var marked=new List<(Point point,byte intensity)>();
             while (pixels.Count > 0)
             {
                 Point a = pixels.Pop();
@@ -111,9 +118,10 @@ namespace ImageEditor.Filters
                 {
                     var pixelColor = _processedBitmap.GetPixel(a.X, a.Y);
                     var pixelIntensity = GetGreyscale(pixelColor.R, pixelColor.G, pixelColor.B);
-                    if (pixelIntensity >= targetIntensity-offset&& pixelIntensity <= targetIntensity + offset)
+                    if (pixelIntensity >= targetIntensity - offset && pixelIntensity <= targetIntensity + offset)
                     {
                         _processedBitmap.SetPixel(a.X, a.Y, Color.Black);
+                        marked.Add((new Point(a.X,a.Y),pixelIntensity));
                         pixels.Push(new Point(a.X - 1, a.Y));
                         pixels.Push(new Point(a.X + 1, a.Y));
                         pixels.Push(new Point(a.X, a.Y - 1));
@@ -121,6 +129,15 @@ namespace ImageEditor.Filters
                     }
                 }
             }
+
+            foreach (var p in marked)
+            {
+                if (whitePoints.Contains(p.point))
+                    whitePoints.Remove(p.point);
+            }
+
+            if (marked.Count > maxReflectionSize) 
+                marked.ForEach(p => _processedBitmap.SetPixel(p.point.X, p.point.Y,Color.FromArgb(p.intensity,p.intensity,p.intensity)));
         }
 
         private List<Point> ApplyThresholding()
@@ -224,7 +241,7 @@ namespace ImageEditor.Filters
             return pointMaxIntensityDifferences;
         }
 
-        private void MarkObtainedPoints(Dictionary<Point, CircleIntensity> pointMaxIntensityDifferences, Point floodFillStart)
+        private void MarkObtainedPoints(Dictionary<Point, CircleIntensity> pointMaxIntensityDifferences)
         {
             var center = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).First();
 
@@ -236,8 +253,6 @@ namespace ImageEditor.Filters
                     continue;
                 MarkPoint(p,Color.Red);               
             }
-
-            MarkPoint(floodFillStart, Color.CornflowerBlue);
 
             LogService.Write($"Selected center: {center.Key.X} , {center.Key.Y} ,radius: {center.Value.Radius} , " +
                              $"DiffIntensity: {center.Value.DiffIntensity}");
