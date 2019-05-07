@@ -3,14 +3,13 @@ using GalaSoft.MvvmLight.CommandWpf;
 using ImageEditor.Filters;
 using ImageEditor.Filters.Interfaces;
 using ImageEditor.ViewModel.Helpers;
-using Microsoft.Win32;
 using System.Drawing;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Collections.ObjectModel;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.IO;
-using System.Linq;
+using System.Windows.Threading;
 
 namespace ImageEditor.ViewModel
 {
@@ -79,18 +78,24 @@ namespace ImageEditor.ViewModel
             }
         }
 
-        private async void ApplyFilter(object obj)
+        private void ApplyFilter(object obj)
         {
-            foreach (var item in ImageViewItems)
+            Parallel.ForEach(ImageViewItems,async item =>
             {
                 if (item.ProcessedBitmap == null || item.SpinnerVisibility == Visibility.Visible) return;
                 var filter = obj as FilterViewItem;
-                item.SpinnerVisibility = Visibility.Visible;
-                item.ProcessedBitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
-                RaisePropertyChanged(nameof(item.ProcessedBitmap));
-                item.SpinnerVisibility = Visibility.Hidden;
-                ProcessedImagesCount++;
-            }
+                Dispatcher.CurrentDispatcher.Invoke(() => item.SpinnerVisibility = Visibility.Visible);
+
+                var bitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), FilterItem);
+                Dispatcher.CurrentDispatcher.Invoke(() =>
+                {
+                    item.ProcessedBitmap = bitmap;
+                    RaisePropertyChanged(nameof(item.ProcessedBitmap));
+                    item.SpinnerVisibility = Visibility.Hidden;
+                    ProcessedImagesCount++;
+                });
+            });
+            
 
         }
 
@@ -111,6 +116,8 @@ namespace ImageEditor.ViewModel
                 item.ProcessedBitmap = new Bitmap(item.OriginalBitmap);
                 RaisePropertyChanged(nameof(item.ProcessedBitmap));
             }
+
+            ProcessedImagesCount = 0;
         }
     }
 }
