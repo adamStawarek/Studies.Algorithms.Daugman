@@ -60,6 +60,7 @@ namespace ImageEditor.ViewModel
                 var files = Directory.GetFiles(dialog.FileName, "*.jpg", SearchOption.AllDirectories);
                 SetUpImageViews(files);
                 FilterItem.ErrorMessage = "";
+                ProcessedImagesCount = 0;
             }
         }
 
@@ -94,9 +95,7 @@ namespace ImageEditor.ViewModel
                     item.SpinnerVisibility = Visibility.Hidden;
                     ProcessedImagesCount++;
                 });
-            });
-            
-
+            });          
         }
 
         private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FilterViewItem filterItem)

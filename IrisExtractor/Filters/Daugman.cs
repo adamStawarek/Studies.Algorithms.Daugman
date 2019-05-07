@@ -10,7 +10,6 @@ namespace ImageEditor.Filters
     public class Daugman : IFilter
     {
         public string Name => "daugman";
-        private readonly int _maxRadius = 80;
         private readonly int _minRadius = 30;
         private Bitmap _processedBitmap;
 
@@ -20,21 +19,12 @@ namespace ImageEditor.Filters
             _processedBitmap = bitmap;
             var pn = GetProbabilities();
             ApplyHistogramEqualization(pn);
-            Point startPoint = FindFloodFillStaringPoint();
+            var startPoint = FindFloodFillStaringPoint();
             ApplyFloodFill(startPoint);
-            var thresholdPixels = ApplyThersholding();
+            var thresholdPixels = ApplyThresholding();
             var localMinPixels = FindLocalMinimums(ref thresholdPixels);
             var pointMaxIntensityDifferences = CalculateCircularPixelsIntensities(localMinPixels);
-            MarkObtainedPoints(pointMaxIntensityDifferences);
-            _processedBitmap.SetPixel(startPoint.X, startPoint.Y, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X - 1, startPoint.Y, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X + 1, startPoint.Y, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X - 1, startPoint.Y + 1, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X, startPoint.Y + 1, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X + 1, startPoint.Y + 1, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X - 1, startPoint.Y - 1, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X, startPoint.Y - 1, Color.Pink);
-            _processedBitmap.SetPixel(startPoint.X + 1, startPoint.Y - 1, Color.Pink);
+            MarkObtainedPoints(pointMaxIntensityDifferences,startPoint);         
             return _processedBitmap;
         }
       
@@ -133,9 +123,9 @@ namespace ImageEditor.Filters
             }
         }
 
-        private List<Point> ApplyThersholding()
+        private List<Point> ApplyThresholding()
         {
-            LogService.Write("Thersholding started...");
+            LogService.Write("Thresholding started...");
 
             var thresholdPixels = new List<Point>();
             var thresholdValue = byte.MaxValue / 2;
@@ -234,67 +224,36 @@ namespace ImageEditor.Filters
             return pointMaxIntensityDifferences;
         }
 
-        private void MarkObtainedPoints(Dictionary<Point, CircleIntensity> pointMaxIntensityDifferences)
+        private void MarkObtainedPoints(Dictionary<Point, CircleIntensity> pointMaxIntensityDifferences, Point floodFillStart)
         {
+            var center = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).First();
 
-            var point2 = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).First();
-            LogService.Write($"Selected center: {point2.Key.X} , {point2.Key.Y} ,radius: {point2.Value.Radius} , " +
-                             $"DiffIntensity: {point2.Value.DiffIntensity}");
+            MarkPoint(center.Key,Color.Yellow);
 
-
-            _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y + 1, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y + 1, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y + 1, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y - 1, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y - 1, Color.Yellow);
-            _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow);
-            foreach (var p in point2.Key.GetCircularPoints(point2.Value.Radius, Math.PI / 6.0f))
+            foreach (var p in center.Key.GetCircularPoints(center.Value.Radius, Math.PI / 6.0f))
             {
                 if(p.Y+1>=_processedBitmap.Height||p.Y-1<0||p.X-1<0||p.X+1>=_processedBitmap.Width)
                     continue;
-                _processedBitmap.SetPixel(p.X, p.Y, Color.Red);
-                _processedBitmap.SetPixel(p.X - 1, p.Y, Color.Red);
-                _processedBitmap.SetPixel(p.X + 1, p.Y, Color.Red);
-                _processedBitmap.SetPixel(p.X - 1, p.Y + 1, Color.Red);
-                _processedBitmap.SetPixel(p.X, p.Y + 1, Color.Red);
-                _processedBitmap.SetPixel(p.X + 1, p.Y + 1, Color.Red);
-                _processedBitmap.SetPixel(p.X - 1, p.Y - 1, Color.Red);
-                _processedBitmap.SetPixel(p.X, p.Y - 1, Color.Red);
-                _processedBitmap.SetPixel(p.X + 1, p.Y - 1, Color.Red);
+                MarkPoint(p,Color.Red);               
             }
 
-            //var points = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).Take(5).ToList();
-            ////LogService.Write($"Selected center: {point2.Key.X} , {point2.Key.Y} ,radius: {point2.Value.Radius} , " +
-            ////                 $"diffIntensity: {point2.Value.DiffIntensity}");
+            MarkPoint(floodFillStart, Color.CornflowerBlue);
 
+            LogService.Write($"Selected center: {center.Key.X} , {center.Key.Y} ,radius: {center.Value.Radius} , " +
+                             $"DiffIntensity: {center.Value.DiffIntensity}");
+        }
 
-            //foreach (var point2 in points)
-            //{
-            //    _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y + 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y + 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y + 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X - 1, point2.Key.Y - 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X, point2.Key.Y - 1, Color.Yellow);
-            //    _processedBitmap.SetPixel(point2.Key.X + 1, point2.Key.Y - 1, Color.Yellow);
-            //}
-            //foreach (var p in points[0].Key.GetCircularPoints(points[0].Value.Radius, Math.PI / 6.0f))
-            //{
-            //    _processedBitmap.SetPixel(p.X, p.Y, Color.Red);
-            //    _processedBitmap.SetPixel(p.X - 1, p.Y, Color.Red);
-            //    _processedBitmap.SetPixel(p.X + 1, p.Y, Color.Red);
-            //    _processedBitmap.SetPixel(p.X - 1, p.Y + 1, Color.Red);
-            //    _processedBitmap.SetPixel(p.X, p.Y + 1, Color.Red);
-            //    _processedBitmap.SetPixel(p.X + 1, p.Y + 1, Color.Red);
-            //    _processedBitmap.SetPixel(p.X - 1, p.Y - 1, Color.Red);
-            //    _processedBitmap.SetPixel(p.X, p.Y - 1, Color.Red);
-            //    _processedBitmap.SetPixel(p.X + 1, p.Y - 1, Color.Red);
-            //}
+        private void MarkPoint(Point p,Color color)
+        {
+            _processedBitmap.SetPixel(p.X, p.Y, color);
+            _processedBitmap.SetPixel(p.X - 1, p.Y, color);
+            _processedBitmap.SetPixel(p.X + 1, p.Y, color);
+            _processedBitmap.SetPixel(p.X - 1, p.Y + 1, color);
+            _processedBitmap.SetPixel(p.X, p.Y + 1, color);
+            _processedBitmap.SetPixel(p.X + 1, p.Y + 1, color);
+            _processedBitmap.SetPixel(p.X - 1, p.Y - 1, color);
+            _processedBitmap.SetPixel(p.X, p.Y - 1, color);
+            _processedBitmap.SetPixel(p.X + 1, p.Y - 1, color);
         }
 
         private byte GetGreyscale(byte r, byte g, byte b)
