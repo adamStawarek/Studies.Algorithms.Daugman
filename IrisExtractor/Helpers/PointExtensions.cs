@@ -11,7 +11,7 @@ namespace ImageEditor.Helpers
         {
             List<Point> points = new List<Point>();
 
-            for (double interval = angleInterval; interval < 2 * Math.PI; interval += angleInterval)
+            for (double interval = 0; interval < 2 * Math.PI; interval += angleInterval)
             {
                 int X = (int)(center.X + (radius * Math.Cos(interval)));
                 int Y = (int)(center.Y + (radius * Math.Sin(interval)));
@@ -19,7 +19,9 @@ namespace ImageEditor.Helpers
                 points.Add(new Point(X, Y));
             }
 
-            return points.Distinct().ToList();
+            points.RemoveRange(5, 8);
+            points.RemoveRange(14, 8);
+            return points;
         }
     }
 }

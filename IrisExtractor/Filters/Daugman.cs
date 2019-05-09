@@ -15,17 +15,14 @@ namespace ImageEditor.Filters
 
         public Bitmap Filter(Bitmap bitmap)
         {
-
             _processedBitmap = bitmap;
             var pn = GetProbabilities();
             ApplyHistogramEqualization(pn);
-            var pointsToIgnore=new List<Point>();
             var whitePoints = GetWhitePointsFromImageCenter();
             while (whitePoints.Count>0)
             {
-                ApplyFloodFill(whitePoints.First(),50, whitePoints);
-            } 
-           
+                ApplyFloodFill(whitePoints.First(),150, whitePoints);
+            }            
             var thresholdPixels = ApplyThresholding();
             var localMinPixels = FindLocalMinimums(ref thresholdPixels);
             var pointMaxIntensityDifferences = CalculateCircularPixelsIntensities(localMinPixels);
@@ -216,7 +213,7 @@ namespace ImageEditor.Filters
 
                 for (int i = _minRadius; i <  maxPointRadius; i+=3)
                 {
-                    var circularPoints = point.GetCircularPoints(i, Math.PI / 6.0f);
+                    var circularPoints = point.GetCircularPoints(i, Math.PI / 17.0f);
 
                     var intensitiesSum = (int)circularPoints.Sum(p =>
                     {
@@ -247,7 +244,7 @@ namespace ImageEditor.Filters
 
             MarkPoint(center.Key,Color.Yellow);
 
-            foreach (var p in center.Key.GetCircularPoints(center.Value.Radius, Math.PI / 6.0f))
+            foreach (var p in center.Key.GetCircularPoints(center.Value.Radius, Math.PI / 17.0f))
             {
                 if(p.Y+1>=_processedBitmap.Height||p.Y-1<0||p.X-1<0||p.X+1>=_processedBitmap.Width)
                     continue;
