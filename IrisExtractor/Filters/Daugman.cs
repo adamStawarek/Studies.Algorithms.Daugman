@@ -13,7 +13,7 @@ namespace ImageEditor.Filters
         private readonly int _minRadius = 30;
         private Bitmap _processedBitmap;
 
-        public Bitmap Filter(Bitmap bitmap)
+        public FilterResult Filter(Bitmap bitmap)
         {
             _processedBitmap = bitmap;
             var pn = GetProbabilities();
@@ -25,9 +25,9 @@ namespace ImageEditor.Filters
             }            
             var thresholdPixels = ApplyThresholding();
             var localMinPixels = FindLocalMinimums(ref thresholdPixels);
-            var pointMaxIntensityDifferences = CalculateCircularPixelsIntensities(localMinPixels);
-            MarkObtainedPoints(pointMaxIntensityDifferences);         
-            return _processedBitmap;
+            var (pupil, radius) = GetPupilAndRadius(localMinPixels);
+            MarkObtainedPoints(pupil,radius);
+            return new FilterResult() {Bitmap = _processedBitmap, Pupil = pupil, Radius = radius};
         }
       
         private double[] GetProbabilities()
@@ -190,7 +190,7 @@ namespace ImageEditor.Filters
             return localMinPixels;
         }       
 
-        private Dictionary<Point, CircleIntensity> CalculateCircularPixelsIntensities(List<Point> localMinPixels)
+        private (Point pupil,int radius) GetPupilAndRadius(List<Point> localMinPixels)
         {
             LogService.Write("calculating circular pixels intensities");
             var pointMaxIntensityDifferences = new Dictionary<Point, CircleIntensity>();
@@ -234,25 +234,23 @@ namespace ImageEditor.Filters
                     previousIntensities = intensitiesSum;
                 }
             }
-
-            return pointMaxIntensityDifferences;
-        }
-
-        private void MarkObtainedPoints(Dictionary<Point, CircleIntensity> pointMaxIntensityDifferences)
-        {
             var center = pointMaxIntensityDifferences.OrderByDescending(p => p.Value.DiffIntensity).First();
 
-            MarkPoint(center.Key,Color.Yellow);
+            return (center.Key,center.Value.Radius);
+        }
 
-            foreach (var p in center.Key.GetCircularPoints(center.Value.Radius, Math.PI / 17.0f))
+        private void MarkObtainedPoints(Point pupil,int radius)
+        {         
+            MarkPoint(pupil,Color.Yellow);
+
+            foreach (var p in pupil.GetCircularPoints(radius, Math.PI / 17.0f))
             {
                 if(p.Y+1>=_processedBitmap.Height||p.Y-1<0||p.X-1<0||p.X+1>=_processedBitmap.Width)
                     continue;
                 MarkPoint(p,Color.Red);               
             }
 
-            LogService.Write($"Selected center: {center.Key.X} , {center.Key.Y} ,radius: {center.Value.Radius} , " +
-                             $"DiffIntensity: {center.Value.DiffIntensity}");
+            LogService.Write($"Selected center: {pupil.X} , {pupil.Y} ,radius: {radius}");
         }
 
         private void MarkPoint(Point p,Color color)

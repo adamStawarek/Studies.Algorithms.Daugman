@@ -2,12 +2,15 @@
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using Point = System.Drawing.Point;
 
 namespace ImageEditor.ViewModel.Helpers
 {
     public class ImageViewItem:INotifyPropertyChanged
     {
         public string FilePath { get; set; }
+        public Point Pupil { get; set; }
+        public int Radius { get; set; }
 
         public Bitmap OriginalBitmap { get; set; }
 

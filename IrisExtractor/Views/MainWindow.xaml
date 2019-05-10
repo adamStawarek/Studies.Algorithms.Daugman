@@ -47,7 +47,7 @@
                             <DataTemplate>
                                 <Grid Width="200">
                                     <Image Stretch="Uniform" 
-                                           Tag="Image"
+                                           Tag="Image" ToolTip="{Binding FilePath}"
                                            Source="{Binding ProcessedBitmap,
                                         Converter={StaticResource BitmapToImageSource},
                                         NotifyOnSourceUpdated=True}">
@@ -83,15 +83,22 @@
                                                 Command="{Binding DataContext.ResetCommand,ElementName=MainPanel}">
                                         </Button>
                                     </StackPanel>
-                                    <Label ContentStringFormat="Loaded photos: {0}"
-                                           Content="{Binding DataContext.ImageViewItems.Count,ElementName=MainPanel}"    
-                                           FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Center"/>
+                                    <CheckBox Content="Save pupil and radius" VerticalContentAlignment="Bottom"
+                                              HorizontalAlignment="Center" FontSize="16"
+                                              IsChecked="{Binding DataContext.IsSaveToDbEnabled
+                                        ,ElementName=MainPanel,Mode=OneWay}"/>
                                     <ProgressBar Value="{Binding DataContext.ProcessedImagesCount,ElementName=MainPanel}"
                                                  Maximum="{Binding DataContext.ImageViewItems.Count,ElementName=MainPanel}"
-                                                 Margin="10,5,10,5"/>
-                                    <Label ContentStringFormat="Processed photos: {0}"
-                                           Content="{Binding DataContext.ProcessedImagesCount,ElementName=MainPanel}" 
-                                           FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Center"/>
+                                                 Margin="10" Height="5"/>
+                                    <TextBlock
+                                           FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Center">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="Processed photos: {0}/{1}" Mode="OneWay">
+                                                <Binding Path="DataContext.ProcessedImagesCount" ElementName="MainPanel" />
+                                                <Binding Path="DataContext.ImageViewItems.Count" ElementName="MainPanel"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
                                     <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
                                                Text="{Binding ErrorMessage,Mode=TwoWay}"  HorizontalAlignment="Left"
                                                FontSize="16" Foreground="OrangeRed" FontWeight="DemiBold" />

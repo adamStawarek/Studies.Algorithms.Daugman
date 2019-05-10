@@ -5,11 +5,13 @@ using ImageEditor.Filters.Interfaces;
 using ImageEditor.ViewModel.Helpers;
 using Microsoft.WindowsAPICodePack.Dialogs;
 using System.Collections.ObjectModel;
+using System.Data.Entity.Migrations;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using Point = System.Drawing.Point;
 
 namespace ImageEditor.ViewModel
 {
@@ -17,6 +19,7 @@ namespace ImageEditor.ViewModel
     {
 
         #region properties
+        public bool IsSaveToDbEnabled { get; set; }
         public FilterViewItem FilterItem => new FilterViewItem(new Daugman());
         public ObservableCollection<ImageViewItem> ImageViewItems { get; set; }
         private int _processedImagesCount;
@@ -86,20 +89,33 @@ namespace ImageEditor.ViewModel
                 if (item.ProcessedBitmap == null || item.SpinnerVisibility == Visibility.Visible) return;
                 var filter = obj as FilterViewItem;
                 item.SpinnerVisibility = Visibility.Visible;
-                item.ProcessedBitmap = await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
+                var filterResult= await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
+                item.ProcessedBitmap = filterResult.Bitmap;
                 RaisePropertyChanged(nameof(item.ProcessedBitmap));
                 item.SpinnerVisibility = Visibility.Hidden;
                 ProcessedImagesCount++;
+
+                if(!IsSaveToDbEnabled) continue;
+                using (var context=new DaugmanContext())
+                {
+                    context.Photos.AddOrUpdate(new Photo()
+                    {
+                        Path = item.FilePath,
+                        CenterX = filterResult.Pupil.X,
+                        CenterY = filterResult.Pupil.Y,
+                        Radius = filterResult.Radius
+                    });              
+                    context.SaveChanges();
+                }               
             }
         }
 
-        private async Task<Bitmap> ApplyFilterAsync(Bitmap b, FilterViewItem filterItem)
+        private async Task<FilterResult> ApplyFilterAsync(Bitmap b, FilterViewItem filterItem)
         {
-            await Task.Run(delegate
+            return await Task.Run(delegate
             {
-                filterItem.Filter.Filter(b);
+                return filterItem.Filter.Filter(b);
             });
-            return b;
         }
 
         private void ResetFilter()

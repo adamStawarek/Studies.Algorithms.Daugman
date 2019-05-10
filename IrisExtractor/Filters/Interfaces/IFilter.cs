@@ -4,7 +4,7 @@ namespace ImageEditor.Filters.Interfaces
 {
     public interface IFilter
     {
-        Bitmap Filter(Bitmap image);
+        FilterResult Filter(Bitmap image);
         string Name { get; }
     }
 }
