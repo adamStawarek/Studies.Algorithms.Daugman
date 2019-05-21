@@ -2,8 +2,11 @@ using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.CommandWpf;
 using ImageEditor.Filters;
 using ImageEditor.Filters.Interfaces;
+using ImageEditor.Helpers;
 using ImageEditor.ViewModel.Helpers;
 using Microsoft.WindowsAPICodePack.Dialogs;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Data.Entity.Migrations;
 using System.Drawing;
@@ -11,6 +14,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 
 namespace ImageEditor.ViewModel
@@ -37,6 +43,8 @@ namespace ImageEditor.ViewModel
         #region relay commands
         public RelayCommand OpenFolderCommand { get; private set; }
         public RelayCommand ResetCommand { get; private set; }
+        public RelayCommand EncodeIrisCommand { get; private set; }
+        public RelayCommand LoadIrisFeaturesCommand { get; set; }
         public RelayCommand<object> ApplyDaugmanCommand { get; private set; }
         #endregion
 
@@ -45,6 +53,8 @@ namespace ImageEditor.ViewModel
             OpenFolderCommand = new RelayCommand(OpenFolder);
             ApplyDaugmanCommand = new RelayCommand<object>(ApplyFilter);
             ResetCommand = new RelayCommand(ResetFilter);
+            EncodeIrisCommand=new RelayCommand(EncodeIris);
+            LoadIrisFeaturesCommand=new RelayCommand(LoadIrisFeatures);
             ImageViewItems = new ObservableCollection<ImageViewItem>();
 
             if (FilterItem.Filter is IError e)
@@ -91,22 +101,28 @@ namespace ImageEditor.ViewModel
                 item.SpinnerVisibility = Visibility.Visible;
                 var filterResult= await ApplyFilterAsync(new Bitmap(item.ProcessedBitmap), filter);
                 item.ProcessedBitmap = filterResult.Bitmap;
+                item.Pupil = filterResult.Pupil;
+                item.Radius = filterResult.Radius;
                 RaisePropertyChanged(nameof(item.ProcessedBitmap));
                 item.SpinnerVisibility = Visibility.Hidden;
                 ProcessedImagesCount++;
+                SaveIrisFeaturesToDb(item, filterResult);
+            }
+        }
 
-                if(!IsSaveToDbEnabled) continue;
-                using (var context=new DaugmanContext())
+        private void SaveIrisFeaturesToDb(ImageViewItem item, FilterResult filterResult)
+        {
+            if (!IsSaveToDbEnabled) return;
+            using (var context = new DaugmanContext())
+            {
+                context.Photos.AddOrUpdate(new Photo()
                 {
-                    context.Photos.AddOrUpdate(new Photo()
-                    {
-                        Path = item.FilePath,
-                        CenterX = filterResult.Pupil.X,
-                        CenterY = filterResult.Pupil.Y,
-                        Radius = filterResult.Radius
-                    });              
-                    context.SaveChanges();
-                }               
+                    Path = item.FilePath,
+                    CenterX = filterResult.Pupil.X,
+                    CenterY = filterResult.Pupil.Y,
+                    Radius = filterResult.Radius
+                });
+                context.SaveChanges();
             }
         }
 
@@ -116,6 +132,88 @@ namespace ImageEditor.ViewModel
             {
                 return filterItem.Filter.Filter(b);
             });
+        }
+
+        private void LoadIrisFeatures()
+        {
+            using (var context=new DaugmanContext())
+            {
+                foreach (var item in ImageViewItems)
+                {
+                    var irisFeature = context.Photos.Find(item.FilePath);
+                    var tmp = new Bitmap(item.ProcessedBitmap);
+                   
+                    var pupil = new Point(irisFeature.CenterX, irisFeature.CenterY);
+                    var radius = irisFeature.Radius;
+                    item.Pupil = pupil;
+                    item.Radius = radius;
+
+                    MarkPoint(tmp,pupil,Color.Yellow);
+                    foreach (var p in pupil.GetCircularPoints(radius, Math.PI / 17.0f))
+                    {
+                        if (p.Y + 1 >= tmp.Height || p.Y - 1 < 0 || p.X - 1 < 0 || p.X + 1 >=tmp.Width)
+                            continue;
+                        MarkPoint(tmp,p, Color.Red);
+                    }
+
+                    item.ProcessedBitmap = tmp;
+                }
+            }          
+        }
+
+        private void EncodeIris()
+        {
+            foreach (var item in ImageViewItems)
+            {
+                var radius = item.Radius;
+                var pupil = item.Pupil;
+                var height = item.OriginalBitmap.Height;
+                var width = item.OriginalBitmap.Width;
+
+                Bitmap bmp = new Bitmap(width, height);
+                using (Graphics g = Graphics.FromImage(bmp)) { g.Clear(Color.AntiqueWhite); }
+
+                var pointsWithDistanceToPupil = GetPointsInsideIris(radius, pupil);
+                foreach (var p in pointsWithDistanceToPupil)
+                {
+                    var angle = pupil.GetAngle(p.point);
+                    var newPoint = PointExtensions.PolarToCartesian(angle, p.distance);
+                    var color = item.OriginalBitmap.GetPixel(p.point.X, p.point.Y);
+                    bmp.SetPixel(p.point.X, p.point.Y, color);
+                }
+
+                item.ProcessedBitmap = bmp;
+            }           
+        }
+
+        private List<(Point point, double distance)> GetPointsInsideIris(int radius, Point pupil)
+        {
+            var points = new List<(Point,double)>();
+            for (int i = pupil.X - radius; i < pupil.X + radius; i++)
+            {
+                for (int j = pupil.Y - radius; j < pupil.Y + radius; j++)
+                {
+                    var point = new Point(i, j);
+                    var distance = Math.Sqrt(Math.Pow(i - pupil.X, 2) + Math.Pow(j - pupil.Y, 2));
+                    if (distance > radius) continue;
+                    points.Add((point,distance));
+                }
+            }
+
+            return points;
+        }
+
+        private void MarkPoint(Bitmap bitmap,Point p, Color color)
+        {
+            bitmap.SetPixel(p.X, p.Y, color);
+            bitmap.SetPixel(p.X - 1, p.Y, color);
+            bitmap.SetPixel(p.X + 1, p.Y, color);
+            bitmap.SetPixel(p.X - 1, p.Y + 1, color);
+            bitmap.SetPixel(p.X, p.Y + 1, color);
+            bitmap.SetPixel(p.X + 1, p.Y + 1, color);
+            bitmap.SetPixel(p.X - 1, p.Y - 1, color);
+            bitmap.SetPixel(p.X, p.Y - 1, color);
+            bitmap.SetPixel(p.X + 1, p.Y - 1, color);
         }
 
         private void ResetFilter()

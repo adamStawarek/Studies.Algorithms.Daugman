@@ -65,44 +65,48 @@
                 <StackPanel>
                     <Expander HorizontalAlignment="Stretch" Header="Set up"  IsExpanded="True">
                         <ScrollViewer VerticalScrollBarVisibility="Auto" Background="White" MaxHeight="650">
-                            <StackPanel>
-                                <StackPanel DataContext="{Binding DataContext.FilterItem,ElementName=MainPanel}">
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                        <Button Content="{Binding Filter.Name}" ContentStringFormat="Apply {0}"
+                            <StackPanel DataContext="{Binding DataContext.FilterItem,ElementName=MainPanel}">
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,10,0,0">
+                                    <Button Content="{Binding Filter.Name}" ContentStringFormat="Apply {0}"
                                                     FontSize="18" HorizontalAlignment="Right" Margin="10">
 
-                                            <i:Interaction.Triggers>
-                                                <i:EventTrigger EventName="Click">
-                                                    <command:EventToCommand PassEventArgsToCommand="True" CommandParameter="{Binding .}"
+                                        <i:Interaction.Triggers>
+                                            <i:EventTrigger EventName="Click">
+                                                <command:EventToCommand PassEventArgsToCommand="True" CommandParameter="{Binding .}"
                                                                                 Command="{Binding Path=DataContext.ApplyDaugmanCommand,ElementName=MainPanel,IsAsync=True}"/>
-                                                </i:EventTrigger>
-                                            </i:Interaction.Triggers>
-                                        </Button>
-                                        <Button Content="Reset" Background="OrangeRed" BorderBrush="OrangeRed"
+                                            </i:EventTrigger>
+                                        </i:Interaction.Triggers>
+                                    </Button>
+                                    <Button Content="Reset" Background="OrangeRed" BorderBrush="OrangeRed"
                                                     FontSize="18" HorizontalAlignment="Right" Margin="10"
                                                 Command="{Binding DataContext.ResetCommand,ElementName=MainPanel}">
-                                        </Button>
-                                    </StackPanel>
-                                    <CheckBox Content="Save pupil and radius" VerticalContentAlignment="Bottom"
+                                    </Button>
+                                </StackPanel>
+                                <CheckBox Content="Save pupil and radius" VerticalContentAlignment="Bottom"
                                               HorizontalAlignment="Center" FontSize="16"
                                               IsChecked="{Binding DataContext.IsSaveToDbEnabled
                                         ,ElementName=MainPanel,Mode=OneWay}"/>
-                                    <ProgressBar Value="{Binding DataContext.ProcessedImagesCount,ElementName=MainPanel}"
+                                <ProgressBar Value="{Binding DataContext.ProcessedImagesCount,ElementName=MainPanel}"
                                                  Maximum="{Binding DataContext.ImageViewItems.Count,ElementName=MainPanel}"
                                                  Margin="10" Height="5"/>
-                                    <TextBlock
+                                <TextBlock
                                            FontSize="16" FontWeight="DemiBold" HorizontalAlignment="Center">
-                                        <TextBlock.Text>
-                                            <MultiBinding StringFormat="Processed photos: {0}/{1}" Mode="OneWay">
-                                                <Binding Path="DataContext.ProcessedImagesCount" ElementName="MainPanel" />
-                                                <Binding Path="DataContext.ImageViewItems.Count" ElementName="MainPanel"/>
-                                            </MultiBinding>
-                                        </TextBlock.Text>
-                                    </TextBlock>
-                                    <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="Processed photos: {0}/{1}" Mode="OneWay">
+                                            <Binding Path="DataContext.ProcessedImagesCount" ElementName="MainPanel" />
+                                            <Binding Path="DataContext.ImageViewItems.Count" ElementName="MainPanel"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
                                                Text="{Binding ErrorMessage,Mode=TwoWay}"  HorizontalAlignment="Left"
                                                FontSize="16" Foreground="OrangeRed" FontWeight="DemiBold" />
-                                </StackPanel>
+                                <Button Content="Load saved pupil and radius"
+                                        FontSize="18" HorizontalAlignment="Center" Margin="10" 
+                                        Command="{Binding DataContext.LoadIrisFeaturesCommand,ElementName=MainPanel}"/>
+                                <Button Content="Encode iris"
+                                        FontSize="18" HorizontalAlignment="Center" Margin="10" 
+                                        Command="{Binding DataContext.EncodeIrisCommand,ElementName=MainPanel}"/>
                             </StackPanel>
                         </ScrollViewer>
                     </Expander>

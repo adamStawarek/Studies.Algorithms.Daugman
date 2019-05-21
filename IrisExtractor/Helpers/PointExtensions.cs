@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
+using System.Windows;
+using Point = System.Drawing.Point;
 
 namespace ImageEditor.Helpers
 {
@@ -23,5 +23,22 @@ namespace ImageEditor.Helpers
             points.RemoveRange(14, 8);
             return points;
         }
+
+        public static double GetAngle(this Point p1, Point p2)
+        {
+            float xDiff = p2.X - p1.X;
+            float yDiff = p2.Y - p1.Y;
+            return Math.Atan2(yDiff, xDiff) * (180 / Math.PI);
+        }
+
+        public static Point PolarToCartesian(double angle, double radius)
+        {
+            var angleRad = (Math.PI / 180.0) * angle;
+            var x =(int)Math.Round(radius * Math.Cos(angleRad));
+            var y =(int)Math.Round(radius * Math.Sin(angleRad));
+
+            return new Point(x, y);
+        }
+      
     }
 }
