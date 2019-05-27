@@ -14,6 +14,17 @@ namespace ImageEditor.ViewModel.Helpers
 
         public Bitmap OriginalBitmap { get; set; }
 
+        private Bitmap _encodedBitmap;
+        public Bitmap EncodedBitmap
+        {
+            get => _encodedBitmap;
+            set
+            {
+                _encodedBitmap = value; 
+                OnPropertyChanged(nameof(EncodedBitmap));
+            }
+        }
+
         private Bitmap _processedBitmap;
         public Bitmap ProcessedBitmap
         {
@@ -25,7 +36,7 @@ namespace ImageEditor.ViewModel.Helpers
             }
         }
 
-        private Visibility _spinnerVisibility = Visibility.Hidden;
+        private Visibility _spinnerVisibility = Visibility.Hidden;        
         public Visibility SpinnerVisibility
         {
             get => _spinnerVisibility;

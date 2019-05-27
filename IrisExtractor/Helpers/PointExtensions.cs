@@ -34,11 +34,17 @@ namespace ImageEditor.Helpers
         public static Point PolarToCartesian(double angle, double radius)
         {
             var angleRad = (Math.PI / 180.0) * angle;
-            var x =(int)Math.Round(radius * Math.Cos(angleRad));
-            var y =(int)Math.Round(radius * Math.Sin(angleRad));
+            var x = (int)Math.Round(radius * Math.Cos(angleRad));
+            var y = (int)Math.Round(radius * Math.Sin(angleRad));
 
             return new Point(x, y);
         }
-      
+
+        public static Point PolarToCartesian(this Point point, int radius, double fi)
+        {
+            var x = (int)(point.X + radius * Math.Cos(fi));
+            var y = (int)(point.Y + radius * Math.Sin(fi));
+            return new Point(x, y);
+        }
     }
 }

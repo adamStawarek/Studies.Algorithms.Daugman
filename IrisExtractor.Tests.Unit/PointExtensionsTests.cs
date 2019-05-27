@@ -62,7 +62,7 @@ namespace IrisExtractor.Tests.Unit
         }
 
         [Test]
-        public void PolarToCartersian_Returns()
+        public void PolarToCartesian_Returns()
         {
             var angle = 22.6;
             var radius = 13;

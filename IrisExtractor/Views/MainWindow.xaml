@@ -46,7 +46,7 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <Grid Width="200">
-                                    <Image Stretch="Uniform" 
+                                    <Image Stretch="Uniform"
                                            Tag="Image" ToolTip="{Binding FilePath}"
                                            Source="{Binding ProcessedBitmap,
                                         Converter={StaticResource BitmapToImageSource},
@@ -54,6 +54,40 @@
                                     </Image>
                                     <fa:ImageAwesome Icon="Spinner" Visibility="{Binding SpinnerVisibility}" Foreground="{DynamicResource PrimaryHueDarkBrush}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" Spin="True" Height="80" Width="80" />
+                                    <Popup x:Name="PopupEncodedIris" IsOpen="False">
+                                        <Image Width="200" Source="{Binding EncodedBitmap,
+                                        Converter={StaticResource BitmapToImageSource}}"/>
+                                    </Popup>
+                                    <Grid.Triggers>
+                                        
+                                                <EventTrigger RoutedEvent="Grid.MouseDown">
+                                                    <BeginStoryboard>
+                                                        <Storyboard >
+                                                            <BooleanAnimationUsingKeyFrames
+                                                                Storyboard.TargetName="PopupEncodedIris"
+                                                                Storyboard.TargetProperty="(Popup.IsOpen)">
+                                                                <DiscreteBooleanKeyFrame
+                                                                    KeyTime="0:0:0.1"
+                                                                    Value="True" />
+                                                            </BooleanAnimationUsingKeyFrames>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                                <EventTrigger RoutedEvent="Grid.MouseUp">
+                                                    <BeginStoryboard>
+                                                        <Storyboard >
+                                                            <BooleanAnimationUsingKeyFrames
+                                                                Storyboard.TargetName="PopupEncodedIris"
+                                                                Storyboard.TargetProperty="(Popup.IsOpen)">
+                                                                <DiscreteBooleanKeyFrame
+                                                                    KeyTime="0:0:0.1"
+                                                                    Value="False" />
+                                                            </BooleanAnimationUsingKeyFrames>
+                                                        </Storyboard>
+                                                    </BeginStoryboard>
+                                                </EventTrigger>
+                                           
+                                    </Grid.Triggers>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

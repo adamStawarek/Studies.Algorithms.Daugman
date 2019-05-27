@@ -134,6 +134,7 @@
     <Compile Include="Filters\CircleIntensity.cs" />
     <Compile Include="Filters\Daugman.cs" />
     <Compile Include="Filters\FilterResult.cs" />
+    <Compile Include="Helpers\ColorExtensions.cs" />
     <Compile Include="Helpers\PointExtensions.cs" />
     <Compile Include="Photo.cs">
       <DependentUpon>Daugman.tt</DependentUpon>

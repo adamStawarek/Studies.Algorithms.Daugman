@@ -17,7 +17,6 @@ namespace ImageEditor.Helpers
             }
 
             return lst;
-        }
-       
+        }               
     }
 }
