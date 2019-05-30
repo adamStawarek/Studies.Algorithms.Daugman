@@ -18,5 +18,6 @@ namespace ImageEditor
         public int CenterX { get; set; }
         public int CenterY { get; set; }
         public int Radius { get; set; }
+        public byte[] Encoded { get; set; }
     }
 }

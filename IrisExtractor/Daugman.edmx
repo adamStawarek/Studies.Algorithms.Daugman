@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="DaugmanDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="DaugmanDBModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Photo">
           <Key>
             <PropertyRef Name="Path" />
@@ -13,12 +13,12 @@
           <Property Name="CenterX" Type="int" Nullable="false" />
           <Property Name="CenterY" Type="int" Nullable="false" />
           <Property Name="Radius" Type="int" Nullable="false" />
+          <Property Name="Encoded" Type="varbinary(max)" />
         </EntityType>
         <EntityContainer Name="DaugmanDBModelStoreContainer">
           <EntitySet Name="Photo" EntityType="Self.Photo" Schema="dbo" store:Type="Tables" />
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="DaugmanDBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
@@ -30,6 +30,7 @@
           <Property Name="CenterX" Type="Int32" Nullable="false" />
           <Property Name="CenterY" Type="Int32" Nullable="false" />
           <Property Name="Radius" Type="Int32" Nullable="false" />
+          <Property Name="Encoded" Type="Binary" MaxLength="Max" FixedLength="false" />
         </EntityType>
         <EntityContainer Name="DaugmanContext" annotation:LazyLoadingEnabled="true">
           <EntitySet Name="Photos" EntityType="Self.Photo" />
@@ -43,6 +44,7 @@
           <EntitySetMapping Name="Photos">
             <EntityTypeMapping TypeName="DaugmanDBModel.Photo">
               <MappingFragment StoreEntitySet="Photo">
+                <ScalarProperty Name="Encoded" ColumnName="Encoded" />
                 <ScalarProperty Name="Path" ColumnName="Path" />
                 <ScalarProperty Name="CenterX" ColumnName="CenterX" />
                 <ScalarProperty Name="CenterY" ColumnName="CenterY" />
