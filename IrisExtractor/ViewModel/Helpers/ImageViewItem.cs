@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using Point = System.Drawing.Point;
@@ -22,7 +23,7 @@ namespace ImageEditor.ViewModel.Helpers
                 _isClassifiedCorrectly = value; 
                 OnPropertyChanged(nameof(IsClassifiedCorrectly));
             }
-        }
+        }        
 
         public Bitmap OriginalBitmap { get; set; }
 

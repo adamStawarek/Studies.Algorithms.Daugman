@@ -22,14 +22,13 @@ namespace ImageEditor.Helpers
             return bestMatches.Where(b=>b.Count==max).Select(b=>b.Group).ToList();
         }
        
-        static double GetEuclideanDistance(IList<byte> sample1, IList<byte> sample2)
+        // vector1 and vector2 must have the same length
+        private static double GetEuclideanDistance(IList<byte> vector1, IList<byte> vector2)
         {
-            var distance = 0.0;
-            // assume sample1 and sample2 are valid i.e. same length 
-
-            for (var i = 0; i < sample1.Count; i++)
+            var distance = 0.0;          
+            for (var i = 0; i < vector1.Count; i++)
             {
-                var temp = sample1[i] - sample2[i];
+                var temp = vector1[i] - vector2[i];
                 distance += temp * temp;
             }
             return distance;
