@@ -28,6 +28,7 @@ namespace ImageEditor.ViewModel
         #endregion
 
         #region properties
+        public bool IsDbEnabled => false;
         public bool IsSaveToDbEnabled { get; set; }
         public FilterViewItem FilterItem => new FilterViewItem(new Daugman());
         public ObservableCollection<ImageViewItem> ImageViewItems { get; set; }
@@ -211,12 +212,16 @@ namespace ImageEditor.ViewModel
                 item.EncodedBitmap = new Bitmap(bmp);
                 var bytes = ChunkEncoding(item.EncodedBitmap);
                 item.Bytes = bytes.ToArray();
-                using (var context = new DaugmanContext())
+
+                if (IsDbEnabled)
                 {
-                    var photo = context.Photos.Find(item.FilePath);
-                    photo.Encoded = bytes.ToArray();
-                    context.SaveChanges();
-                }
+                    using (var context = new DaugmanContext())
+                    {
+                        var photo = context.Photos.Find(item.FilePath);
+                        photo.Encoded = bytes.ToArray();
+                        context.SaveChanges();
+                    }
+                }                
             }
         }
 

@@ -118,7 +118,7 @@
                                     </Button>
                                 </StackPanel>
                                 <CheckBox Content="Save pupil and radius" VerticalContentAlignment="Bottom"
-                                              HorizontalAlignment="Center" FontSize="16"
+                                              HorizontalAlignment="Center" FontSize="16" IsEnabled="{Binding DataContext.IsDbEnabled,ElementName=MainPanel}"
                                               IsChecked="{Binding DataContext.IsSaveToDbEnabled
                                         ,ElementName=MainPanel,Mode=OneWay}"/>
                                 <ProgressBar Value="{Binding DataContext.ProcessedImagesCount,ElementName=MainPanel}"
@@ -136,7 +136,7 @@
                                 <TextBlock Visibility="{Binding ErrorMessage,Converter={StaticResource NullToVisibilityConverter}}" 
                                                Text="{Binding ErrorMessage,Mode=TwoWay}"  HorizontalAlignment="Left"
                                                FontSize="16" Foreground="OrangeRed" FontWeight="DemiBold" />
-                                <Button Content="Load saved pupil and radius"
+                                <Button Content="Load saved pupil and radius" IsEnabled="{Binding DataContext.IsDbEnabled,ElementName=MainPanel}"
                                         FontSize="18" HorizontalAlignment="Center" Margin="10" 
                                         Command="{Binding DataContext.LoadIrisFeaturesCommand,ElementName=MainPanel}"/>
                                 <Button Content="Encode iris"
