@@ -144,6 +144,7 @@
     </Compile>
     <Compile Include="ViewModel\Helpers\ImageViewItem.cs" />
     <Compile Include="Views\Converters\BitmapToImageSource.cs" />
+    <Compile Include="Views\Converters\BoolToColorConverter.cs" />
     <Compile Include="Views\Converters\NullToVisibilityConverter.cs" />
     <Compile Include="Filters\Interfaces\IError.cs" />
     <Compile Include="Helpers\LogService.cs" />

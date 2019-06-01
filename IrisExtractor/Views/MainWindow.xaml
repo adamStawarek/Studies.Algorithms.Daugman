@@ -15,6 +15,7 @@
     <Window.Resources>
         <converters:BitmapToImageSource x:Key="BitmapToImageSource"/>
         <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
     </Window.Resources>
     <DockPanel x:Name="MainPanel" Background="{DynamicResource PrimaryHueLightBrush}">
         <Menu DockPanel.Dock="Top" Background="{DynamicResource PrimaryHueDarkBrush}" 
@@ -45,12 +46,12 @@
                         </ListBox.ItemsPanel>
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Grid Width="200">
+                                <Grid Width="200" Background="{Binding IsClassifiedCorrectly,Converter={StaticResource BoolToColorConverter}}">
                                     <Image Stretch="Uniform"
                                            Tag="Image" ToolTip="{Binding FilePath}"
                                            Source="{Binding ProcessedBitmap,
                                         Converter={StaticResource BitmapToImageSource},
-                                        NotifyOnSourceUpdated=True}">
+                                        NotifyOnSourceUpdated=True}" Margin="3">
                                     </Image>
                                     <fa:ImageAwesome Icon="Spinner" Visibility="{Binding SpinnerVisibility}" Foreground="{DynamicResource PrimaryHueDarkBrush}"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center" Spin="True" Height="80" Width="80" />

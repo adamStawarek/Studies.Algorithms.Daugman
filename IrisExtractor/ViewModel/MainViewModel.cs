@@ -84,7 +84,7 @@ namespace ImageEditor.ViewModel
 
         private void SetUpImageViews(string[] files)
         {
-            ImageViewItems.Clear();
+            ImageViewItems.Clear();           
             foreach (var file in files)
             {
                 ImageViewItems.Add(new ImageViewItem()
@@ -328,19 +328,18 @@ namespace ImageEditor.ViewModel
             foreach (var byteCount in distinctByteCounts)
             {
                 var trainSet = ImageViewItems.Where(d => d.Bytes.Length == byteCount)
-                    .Select(i => (i.FilePath.Replace("Sessao_1\\", "").Replace("Sessao_2\\", "").TrimRightFromChar(), i.Bytes));
+                    .Select(i => (i.FilePath.TrimRightFromChar(), i.Bytes));
                 foreach (var item in ImageViewItems.Where(d => d.Bytes.Length == byteCount))
                 {
-                    var itemGroup = item.FilePath.Replace("Sessao_1\\", "").Replace("Sessao_2\\", "").TrimRightFromChar();
+                    var itemGroup = item.FilePath.TrimRightFromChar();
                     var predictedGroups = Knn.ClassifyVector(trainSet, item.Bytes, 3);
 
                     item.IsClassifiedCorrectly = (predictedGroups.Contains(itemGroup));
                 }
-            }
-           
-
-            var properClassificationCount = ImageViewItems.Count(i => i.IsClassifiedCorrectly);
-            var inproperClassificationCount = ImageViewItems.Count(i => !i.IsClassifiedCorrectly);
+            }            
+            var properCount = ImageViewItems.Count(i => (bool)i.IsClassifiedCorrectly);
+            var inproperCount = ImageViewItems.Count(i => (bool)!i.IsClassifiedCorrectly);
+            MessageBox.Show($"Classyfied correctly: {properCount}, incorectly: {inproperCount}");
         }
 
         private List<(Point point, double distance)> GetPointsInsideIris(int radius, Point pupil)

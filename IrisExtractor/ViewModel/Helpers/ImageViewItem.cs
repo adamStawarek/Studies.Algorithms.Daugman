@@ -13,8 +13,8 @@ namespace ImageEditor.ViewModel.Helpers
         public int Radius { get; set; }
         public byte[] Bytes { get; set; }
 
-        private bool _isClassifiedCorrectly;
-        public bool IsClassifiedCorrectly
+        private bool? _isClassifiedCorrectly;
+        public bool? IsClassifiedCorrectly
         {
             get => _isClassifiedCorrectly;
             set
