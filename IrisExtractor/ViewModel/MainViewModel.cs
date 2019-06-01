@@ -22,7 +22,7 @@ namespace ImageEditor.ViewModel
     public class MainViewModel : ViewModelBase
     {
         #region fields
-        private const int degrees = 4;
+        private const float degrees = 30.0f;
         private const int countFirstPixelsToSkip = 10;
         private const int countLastPixelsToSkip = 5;
         #endregion
@@ -44,6 +44,7 @@ namespace ImageEditor.ViewModel
         #endregion
 
         #region relay commands
+        public RelayCommand ClassifyCommand { get; private set; }
         public RelayCommand OpenFolderCommand { get; private set; }
         public RelayCommand ResetCommand { get; private set; }
         public RelayCommand EncodeIrisCommand { get; private set; }
@@ -58,6 +59,7 @@ namespace ImageEditor.ViewModel
             ResetCommand = new RelayCommand(ResetFilter);
             EncodeIrisCommand = new RelayCommand(EncodeIris);
             LoadIrisFeaturesCommand = new RelayCommand(LoadIrisFeatures);
+            ClassifyCommand = new RelayCommand(Classify);
             ImageViewItems = new ObservableCollection<ImageViewItem>();
 
             if (FilterItem.Filter is IError e)
@@ -66,7 +68,7 @@ namespace ImageEditor.ViewModel
                 e.NoErrorOccured += delegate { FilterItem.ErrorMessage = e.ErrorMessage; };
             }
         }
-
+    
         private void OpenFolder()
         {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
@@ -150,6 +152,7 @@ namespace ImageEditor.ViewModel
                     var radius = irisFeature.Radius;
                     item.Pupil = pupil;
                     item.Radius = radius;
+                    item.Bytes = irisFeature.Encoded;
 
                     MarkPoint(tmp, pupil, Color.Yellow);
                     foreach (var p in pupil.GetCircularPoints(radius, Math.PI / 17.0f))
@@ -174,22 +177,25 @@ namespace ImageEditor.ViewModel
                 var width = item.OriginalBitmap.Width;
                 var countPixelsToSkip = countFirstPixelsToSkip + countLastPixelsToSkip;
 
-                Bitmap bmp = new Bitmap(radius - countPixelsToSkip, degrees);
+                Bitmap bmp = new Bitmap(radius - countPixelsToSkip, (int)degrees);
                 using (Graphics g = Graphics.FromImage(bmp)) { g.Clear(Color.White); }
 
                 var cartesian = new byte[radius - countPixelsToSkip][];
                 for (int i = 0; i < radius - countPixelsToSkip; i++)
-                    cartesian[i] = new byte[degrees];
+                    cartesian[i] = new byte[(int)degrees];
 
                 var counter = 0;
-                for (double fi = 0; fi < 2 * Math.PI; fi += Math.PI / (degrees / 2))
+                var interval = Math.PI / degrees;
+                for (double fi = 0; fi < 2 * Math.PI; fi += interval)
                 {
                     for (var r = countFirstPixelsToSkip; r < radius - countLastPixelsToSkip; r++)
                     {
                         var point = pupil.PolarToCartesian(r, fi);
                         cartesian[r - countFirstPixelsToSkip][counter] = item.OriginalBitmap.GetPixel(point.X, point.Y).GetGreyscale();
-                    }
+                    }                                     
                     counter++;
+                    if (counter==(int)degrees)
+                        break;                   
                 }
 
                 for (int i = 0; i < radius - countPixelsToSkip; i++)
@@ -204,6 +210,7 @@ namespace ImageEditor.ViewModel
 
                 item.EncodedBitmap = new Bitmap(bmp);
                 var bytes = ChunkEncoding(item.EncodedBitmap);
+                item.Bytes = bytes.ToArray();
                 using (var context = new DaugmanContext())
                 {
                     var photo = context.Photos.Find(item.FilePath);
@@ -220,65 +227,66 @@ namespace ImageEditor.ViewModel
             double global_deviation = CalculateMean(0, 0, width, height, image);
             double global_variance = CalculateVariance(0, 0, width, height, image, global_deviation);
             var list_of_deviance_variance_tuples = new List<(double, double)>();
-            var y_step = 2;
-            var x_step = 11;
+            var y_step = 10;
+            var x_step = 10;
+
             Queue<byte> byte_code = new Queue<byte>();
+
             for (var y = 0; y < height - y_step + 1; y += y_step)
             {
                 for (var x = 0; x < width - x_step + 1; x += x_step)
                 {
                     var mean = (double)CalculateMean(x, y, x_step, y_step, image);
                     var variance = (double)CalculateVariance(x, y, x_step, y_step, image, mean);
-                    list_of_deviance_variance_tuples.Add((mean, variance));
-
-                    for (int i = 0; i < list_of_deviance_variance_tuples.Count; i++)
-                    {
-                        var _tuple = list_of_deviance_variance_tuples[i];
-                        if (_tuple.Item1 <= global_deviation)
-                        {
-                            byte_code.Enqueue(0);
-                        }
-                        else
-                        {
-                            byte_code.Enqueue(1);
-                        }
-
-
-                        if (_tuple.Item1 <= global_variance)
-                        {
-                            byte_code.Enqueue(0);
-                        }
-                        else
-                        {
-                            byte_code.Enqueue(1);
-                        }
-
-                        if (i + 1 < list_of_deviance_variance_tuples.Count)
-                        {
-                            var next_tuple = list_of_deviance_variance_tuples[i + 1];
-                            if (_tuple.Item1 <= next_tuple.Item1)
-                                byte_code.Enqueue(0);
-                            else
-                                byte_code.Enqueue(1);
-
-                            if (_tuple.Item2 <= next_tuple.Item2)
-                            {
-                                byte_code.Enqueue(0);
-                            }
-                            else
-                            {
-                                byte_code.Enqueue(1);
-                            }
-                        }
-                        else
-                        {
-                            byte_code.Enqueue(0);
-                            byte_code.Enqueue(0);
-                        }
-
-                    }
-
+                    list_of_deviance_variance_tuples.Add((mean, variance));                    
                 }
+            }
+
+            for (int i = 0; i < list_of_deviance_variance_tuples.Count; i++)
+            {
+                var _tuple = list_of_deviance_variance_tuples[i];
+                if (_tuple.Item1 <= global_deviation)
+                {
+                    byte_code.Enqueue(0);
+                }
+                else
+                {
+                    byte_code.Enqueue(1);
+                }
+
+
+                if (_tuple.Item2 <= global_variance)
+                {
+                    byte_code.Enqueue(0);
+                }
+                else
+                {
+                    byte_code.Enqueue(1);
+                }
+
+                if (i + 1 < list_of_deviance_variance_tuples.Count)
+                {
+                    var next_tuple = list_of_deviance_variance_tuples[i + 1];
+                    if (_tuple.Item1 <= next_tuple.Item1)
+                        byte_code.Enqueue(0);
+                    else
+                        byte_code.Enqueue(1);
+
+                    if (_tuple.Item2 <= next_tuple.Item2)
+                    {
+                        byte_code.Enqueue(0);
+                    }
+                    else
+                    {
+                        byte_code.Enqueue(1);
+                    }
+                }
+                else
+                {
+                    byte_code.Enqueue(0);
+                    byte_code.Enqueue(0);
+                }
+
             }
 
             return byte_code;
@@ -287,9 +295,9 @@ namespace ImageEditor.ViewModel
         private double CalculateVariance(int startX, int startY, int width, int height, Bitmap image, double mean)
         {
             double sum = 0;
-            for (int i = startX; i < width; i++)
+            for (int i = startX; i < startX+width; i++)
             {
-                for (int j = startY; j < height; j++)
+                for (int j = startY; j < startY+height; j++)
                 {
                     sum += Math.Pow(image.GetPixel(i, j).GetGreyscale(), 2);
                 }
@@ -301,9 +309,9 @@ namespace ImageEditor.ViewModel
         private double CalculateMean(int startX, int startY, int width, int height, Bitmap image)
         {
             double sum = 0;
-            for (int i = startX; i < width - 1; i++)
+            for (int i = startX; i < startX+width - 1; i++)
             {
-                for (int j = startY; j < height - 1; j++)
+                for (int j = startY; j < startY+height - 1; j++)
                 {
                     sum += image.GetPixel(i, j).GetGreyscale();
 
@@ -311,6 +319,28 @@ namespace ImageEditor.ViewModel
             }
 
             return sum / (width * height);
+        }
+
+        private void Classify()
+        {
+            var distinctByteCounts = ImageViewItems.Select(i=>i.Bytes.Length).Distinct();
+
+            foreach (var byteCount in distinctByteCounts)
+            {
+                var trainSet = ImageViewItems.Where(d => d.Bytes.Length == byteCount)
+                    .Select(i => (i.FilePath.Replace("Sessao_1\\", "").Replace("Sessao_2\\", "").TrimRightFromChar(), i.Bytes));
+                foreach (var item in ImageViewItems.Where(d => d.Bytes.Length == byteCount))
+                {
+                    var itemGroup = item.FilePath.Replace("Sessao_1\\", "").Replace("Sessao_2\\", "").TrimRightFromChar();
+                    var predictedGroups = Knn.ClassifyVector(trainSet, item.Bytes, 3);
+
+                    item.IsClassifiedCorrectly = (predictedGroups.Contains(itemGroup));
+                }
+            }
+           
+
+            var properClassificationCount = ImageViewItems.Count(i => i.IsClassifiedCorrectly);
+            var inproperClassificationCount = ImageViewItems.Count(i => !i.IsClassifiedCorrectly);
         }
 
         private List<(Point point, double distance)> GetPointsInsideIris(int radius, Point pupil)

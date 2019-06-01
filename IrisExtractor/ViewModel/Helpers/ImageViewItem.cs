@@ -11,6 +11,18 @@ namespace ImageEditor.ViewModel.Helpers
         public string FilePath { get; set; }
         public Point Pupil { get; set; }
         public int Radius { get; set; }
+        public byte[] Bytes { get; set; }
+
+        private bool _isClassifiedCorrectly;
+        public bool IsClassifiedCorrectly
+        {
+            get => _isClassifiedCorrectly;
+            set
+            {
+                _isClassifiedCorrectly = value; 
+                OnPropertyChanged(nameof(IsClassifiedCorrectly));
+            }
+        }
 
         public Bitmap OriginalBitmap { get; set; }
 
@@ -36,7 +48,7 @@ namespace ImageEditor.ViewModel.Helpers
             }
         }
 
-        private Visibility _spinnerVisibility = Visibility.Hidden;        
+        private Visibility _spinnerVisibility = Visibility.Hidden;
         public Visibility SpinnerVisibility
         {
             get => _spinnerVisibility;

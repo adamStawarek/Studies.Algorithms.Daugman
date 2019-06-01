@@ -141,6 +141,9 @@
                                 <Button Content="Encode iris"
                                         FontSize="18" HorizontalAlignment="Center" Margin="10" 
                                         Command="{Binding DataContext.EncodeIrisCommand,ElementName=MainPanel}"/>
+                                <Button Content="Classify"
+                                        FontSize="18" HorizontalAlignment="Center" Margin="10" 
+                                        Command="{Binding DataContext.ClassifyCommand,ElementName=MainPanel}"/>
                             </StackPanel>
                         </ScrollViewer>
                     </Expander>
